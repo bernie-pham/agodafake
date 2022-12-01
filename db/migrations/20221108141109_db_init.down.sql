@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS "Room_restriction";
+DROP TABLE IF EXISTS "Restrictions";
+DROP TABLE IF EXISTS "Reservations";
+DROP TABLE IF EXISTS "Rooms";
+DROP TABLE IF EXISTS "Prices";
+DROP TABLE IF EXISTS "Users";

@@ -1,0 +1,33 @@
+{{template "base".}}
+
+{{define "content"}}
+{{$rooms := index .Data "rooms"}}
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1 class="mt-5">Room Available</h1>
+
+            <hr>
+
+            <table class="table table-stripped">
+                <thead>
+                    <tr>
+                        <th>Room ID</th>
+                        <td>Room Name</td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $rooms}}
+                    <tr>
+                        <th>{{.ID}}</th>
+                        <td>{{.RoomName}}</td>
+                        <td><a class="btn btn-primary btn-lg active" href="/choose-room/{{.ID}}">Book Now</a></td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{{end}}

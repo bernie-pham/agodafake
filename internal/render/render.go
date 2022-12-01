@@ -8,25 +8,30 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/bernie-pham/agodafake/pkg/config"
-	"github.com/bernie-pham/agodafake/pkg/model"
+	"github.com/bernie-pham/agodafake/internal/config"
+	"github.com/bernie-pham/agodafake/internal/model"
+	"github.com/justinas/nosurf"
 )
 
 var functions = template.FuncMap{}
 var app *config.AppConfig
+var pathToTemplates string = "./templates"
 
-func NewTemplates(a *config.AppConfig) {
+func NewRenderer(a *config.AppConfig) {
 	app = a
 }
 
-func RenderTemplateTODO(w http.ResponseWriter, tmpl string, data model.TodoPageData) {
-	parsedTemplate, _ := template.ParseFiles("./templates/" + tmpl)
-	if err := parsedTemplate.Execute(w, data); err != nil {
-		fmt.Println("Error parsing template: ", err)
-		return
+func AddDefaultData(td *model.TemplateData, req *http.Request) {
+	td.Flash = app.Session.PopString(req.Context(), "flash")
+	td.Warning = app.Session.PopString(req.Context(), "warning")
+	td.Error = app.Session.PopString(req.Context(), "error")
+	if app.Session.Exists(req.Context(), "user") {
+		td.IsAuthenticated = 1
 	}
+	td.CSRFToken = nosurf.Token(req)
 }
-func RenderTemplate(w http.ResponseWriter, tmpl string, td *model.TemplateData) {
+
+func Template(w http.ResponseWriter, req *http.Request, tmpl string, td *model.TemplateData) {
 	var templates map[string]*template.Template
 	if app.UseCache {
 		templates = app.TemplateCache
@@ -40,6 +45,9 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *model.TemplateData) 
 	}
 
 	buf := new(bytes.Buffer)
+
+	AddDefaultData(td, req)
+
 	_ = t.Execute(buf, td)
 	_, err := buf.WriteTo(w)
 	if err != nil {
@@ -51,7 +59,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *model.TemplateData) 
 func LoadTemplate() (map[string]*template.Template, error) {
 	myCache := map[string]*template.Template{}
 
-	pages, err := filepath.Glob("./templates/*.page.html")
+	pages, err := filepath.Glob(fmt.Sprintf("%s/*.page.html", pathToTemplates))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -63,13 +71,13 @@ func LoadTemplate() (map[string]*template.Template, error) {
 			log.Fatal(err)
 		}
 
-		matches, err := filepath.Glob("./templates/*.layout.html")
+		matches, err := filepath.Glob(fmt.Sprintf("%s/*.layout.html", pathToTemplates))
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		if len(matches) > 0 {
-			ts, err = ts.ParseGlob("./templates/*.layout.html")
+			ts, err = ts.ParseGlob(fmt.Sprintf("%s/*.layout.html", pathToTemplates))
 			if err != nil {
 				log.Fatal(err)
 			}
